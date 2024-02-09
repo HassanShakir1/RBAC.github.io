@@ -1,0 +1,31 @@
+<%- include('./layouts/header.ejs') %>
+
+<h1>Login</h1>
+<form action="/auth/login" class="form" method="post" id="login">
+  <div>
+    <label for="email">Email/Username</label>
+    <input type="text" name="email" id="email" placeholder="Enter Value" />
+  </div>
+  <div>
+    <label for="password">Password</label>
+    <input
+      type="password"
+      name="password"
+      id="password"
+      placeholder="Enter Password"
+      autocomplete="off"
+    />
+  </div>
+  <div>
+    <input type="submit" value="login" />
+  </div>
+</form>
+<div>
+  <p>
+    Don't have an account?
+    <span><a class="link" href="/auth/register">Sign Up</a></span>
+  </p>
+</div>
+<br />
+
+<%- include('./layouts/footer.ejs') %>

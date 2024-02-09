@@ -1,0 +1,25 @@
+<%- include('./layouts/header.ejs') %>
+
+<h1>Register</h1>
+<form action="/auth/register" class="form" method="post" id="form">
+<div>
+    <label for="email">Email/Username</label>
+    <input type="text" name="email" id="email" placeholder="Enter Value" value="<%= locals.email ? email : ""  %>">
+</div>
+<div>
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" placeholder="Enter Password" autocomplete="off">
+</div>
+<div>
+    <label for="password2">Confirm Password</label>
+    <input type="password" name="password2" id="password2" placeholder="Enter Confirm Password" autocomplete="off">
+</div>
+<div>
+    <input type="submit" value="Register">
+</div>
+</form>
+<p>
+    Already have an account? <span><a href="/auth/login">Login</a></span>
+</p>
+<br>
+<%- include('./layouts/footer.ejs') %>
