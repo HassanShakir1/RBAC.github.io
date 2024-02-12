@@ -2,8 +2,9 @@
   <h2>RBAC</h2>
   <ul>
     <li><a href="/">Home</a></li>
-    <% if (user) { %>
+    <% if (user) { %> <% if (user.role === "ADMIN") { %>
     <li><a href="/admin/user">Manage User</a></li>
+    <% } %>
     <li><a href="/user/profile">Profile</a></li>
     <li><a href="/auth/logout">Logout</a></li>
     <% } else{%>

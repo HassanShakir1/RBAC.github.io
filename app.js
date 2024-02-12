@@ -4,8 +4,9 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const connectFlash = require("connect-flash");
+const connectEnsureLogIn = require("connect-ensure-login");
 const passport = require("passport");
-const connectMongo = require("connect-mongo");
+const { roles } = require("./utils/constants");
 require("dotenv").config();
 
 const app = express();
@@ -19,67 +20,96 @@ app.use(morgan("dev"));
 const router = require("./routes/index.route");
 const router2 = require("./routes/auth.route");
 const router3 = require("./routes/user.route");
+const router4 = require("./routes/admin.route");
 
-const MongoStore = connectMongo(session);
-
-app.use(
-  session({
-    secret: process.env.session_secret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      // secure:true uncomment for https server only
-      httpOnly: true,
-    },
-    store: new MongoStore({ mongooseConnection: mongoose.Connection }),
-  })
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
-require("./utils/passport.auth");
-
-app.use((req, res, next) => {
-  res.locals.user = req.user;
-  next();
+// Establish MongoDB connection
+mongoose.connect(databaseURL, {
+  // useNewUrlParser: true,
+  // useUnifiedTopology: true,
 });
-
-app.use(connectFlash());
-app.use((req, res, next) => {
-  res.locals.messages = req.flash;
-  next();
-});
-
-app.use("/", router);
-app.use("/auth", router2);
-app.use("/user", ensureAuthenticated, router3);
-
-app.use((req, res, next) => {
-  next(createError.NotFound());
-});
-
-app.use((error, req, res, next) => {
-  error.status = error.status || 500;
-  res.status(error.status);
-  res.render("error_40x.ejs", { error });
-});
-
-mongoose.connect(databaseURL);
 const db = mongoose.connection;
 
-db.on("error", console.error.bind(console, "database  connection error"));
+db.on("error", console.error.bind(console, "database connection error"));
 db.once("open", () => {
-  console.log("database connected succesfully");
+  console.log("database connected successfully");
+
+  // Set up session
+  app.use(
+    session({
+      secret: process.env.session_secret,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+      },
+    })
+  );
+
+  // Passport initialization
+  app.use(passport.initialize());
+  app.use(passport.session());
+  require("./utils/passport.auth");
+
+  // Middleware to make user object available in views
+  app.use((req, res, next) => {
+    res.locals.user = req.user;
+    next();
+  });
+
+  // Middleware for flash messages
+  app.use(connectFlash());
+  app.use((req, res, next) => {
+    res.locals.messages = req.flash();
+    next();
+  });
+
+  // Routes
+  app.use("/", router);
+  app.use("/auth", router2);
+  app.use(
+    "/user",
+    connectEnsureLogIn.ensureLoggedIn({ redirectTo: "/auth/login" }),
+    router3
+  );
+  app.use(
+    "/admin",
+    connectEnsureLogIn.ensureLoggedIn({ redirectTo: "/auth/login" }),
+    ensureADmin,
+    router4
+  );
+
+  // 404 Error handler
+  app.use((req, res, next) => {
+    next(createError.NotFound());
+  });
+
+  // General error handler
+  app.use((error, req, res, next) => {
+    error.status = error.status || 500;
+    res.status(error.status);
+    res.render("error_40x.ejs", { error });
+  });
+
+  // Start server
+  app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
 });
 
-app.listen(port, () => {
-  console.log(`server is listining on port ${9000}`);
-});
+// Authentication middleware
+// function ensureAuthenticated(req, res, next) {
+//   if (req.isAuthenticated()) {
+//     next();
+//   } else {
+//     res.redirect("/auth/login");
+//   }
+// }
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
+function ensureADmin(req, res, next) {
+  if (req.user.role === roles.admin) {
     next();
   } else {
-    res.redirect("/auth/login");
+    req.flash("warning", "Only Admin can access");
+    res.redirect("/");
   }
 }

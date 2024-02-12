@@ -12,7 +12,8 @@ router.post(
   "/login",
   ensureNotAuthenticated,
   passport.authenticate("local", {
-    successRedirect: "/user/profile",
+    // successRedirect: "/",
+    successReturnToOrRedirect: "/",
     failureRedirect: "/auth/login",
     failureFlash: true,
   })
@@ -62,7 +63,7 @@ router.post(
       await user.save();
       req.flash("success", `${email} registered successfully`);
       res.redirect("/auth/login");
-      res.send(req.body);
+      // res.send(req.body);
     } catch (error) {
       next(error);
     }
